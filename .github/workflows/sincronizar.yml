@@ -19,21 +19,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          
+          pip install wyze-sdk garminconnect garth certifi
+
       - name: Run Script
         env:
           WYZE_EMAIL: ${{ secrets.WYZE_EMAIL }}
-          WYZE_PASSWORD: ${{ secrets.WYZE_PASSWORD }}
-          WYZE_KEY_ID: ${{ secrets.WYZE_KEY_ID }}
-          WYZE_API_KEY: ${{ secrets.WYZE_API_KEY }}
-          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
-          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          # ... rest of your secrets ...
         run: |
-          # Detectamos dónde se instaló el certificado y lo activamos para todo el sistema
-          CERT_PATH=$(python -m certifi)
-          export SSL_CERT_FILE=$CERT_PATH
-          export REQUESTS_CA_BUNDLE=$CERT_PATH
-          
-          # Ahora corremos el script
+          # Configuramos la variable de entorno para todo el proceso
+          export SSL_CERT_FILE=$(python -m certifi)
+          export REQUESTS_CA_BUNDLE=$(python -m certifi)
           python scale.py
