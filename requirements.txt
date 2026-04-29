@@ -1,3 +1,4 @@
 wyze-sdk
 garminconnect
 garth
+certifi
