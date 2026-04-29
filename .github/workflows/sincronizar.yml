@@ -29,4 +29,11 @@ jobs:
           WYZE_API_KEY: ${{ secrets.WYZE_API_KEY }}
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
-        run: python scale.py
+        run: |
+          # Detectamos dónde se instaló el certificado y lo activamos para todo el sistema
+          CERT_PATH=$(python -m certifi)
+          export SSL_CERT_FILE=$CERT_PATH
+          export REQUESTS_CA_BUNDLE=$CERT_PATH
+          
+          # Ahora corremos el script
+          python scale.py
