@@ -29,4 +29,6 @@ jobs:
           WYZE_API_KEY: ${{ secrets.WYZE_API_KEY }}
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
-        run: python scale.py
+        run: |
+          export REQUESTS_CA_BUNDLE=$(python -c "import certifi; print(certifi.where())")
+          python scale.py
