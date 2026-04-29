@@ -1,3 +1,6 @@
+import os
+import certifi
+os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
 #!/usr/local/bin/python3
 import math
 import os
