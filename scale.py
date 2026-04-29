@@ -1,3 +1,19 @@
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+# 1. Desactivar las advertencias de "Sitio no seguro" en la terminal
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+# 2. Parchear la clase Session de 'requests' para que ignore el SSL globalmente
+# Esto afecta a cualquier librería que use 'requests' (como wyze-sdk)
+old_merge_environment_settings = requests.Session.merge_environment_settings
+
+def new_merge_environment_settings(self, url, proxies, stream, verify, cert):
+    settings = old_merge_environment_settings(self, url, proxies, stream, verify, cert)
+    settings['verify'] = False
+    return settings
+
+requests.Session.merge_environment_settings = new_merge_environment_settings
 import os
 import certifi
 os.environ['REQUESTS_CA_BUNDLE'] = certifi.where()
