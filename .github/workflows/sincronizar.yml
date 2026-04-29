@@ -1,0 +1,27 @@
+name: Sincronizar Bascula Wyze
+
+on:
+  schedule:
+    - cron: '0 13 * * *' # Esto corre todos los días a las 7:00 AM (hora centro de México aprox)
+  workflow_dispatch:      # Esto pone un botón para que lo corras cuando tú quieras
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run Script
+        env:
+          WYZE_EMAIL: ${{ secrets.WYZE_EMAIL }}
+          WYZE_PASSWORD: ${{ secrets.WYZE_PASSWORD }}
+          WYZE_KEY_ID: ${{ secrets.WYZE_KEY_ID }}
+          WYZE_API_KEY: ${{ secrets.WYZE_API_KEY }}
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+        run: python scale.py
