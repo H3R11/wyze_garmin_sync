@@ -23,10 +23,17 @@ jobs:
 
       - name: Run Script
         env:
+          # Aquí conectamos la "caja fuerte" de GitHub con el script de Python
           WYZE_EMAIL: ${{ secrets.WYZE_EMAIL }}
-          # ... rest of your secrets ...
+          WYZE_PASSWORD: ${{ secrets.WYZE_PASSWORD }}
+          WYZE_KEY_ID: ${{ secrets.WYZE_KEY_ID }}
+          WYZE_API_KEY: ${{ secrets.WYZE_API_KEY }}
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: |
-          # Configuramos la variable de entorno para todo el proceso
+          # 1. Activamos los certificados de seguridad
           export SSL_CERT_FILE=$(python -m certifi)
           export REQUESTS_CA_BUNDLE=$(python -m certifi)
+          
+          # 2. Corremos el script
           python scale.py
