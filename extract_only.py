@@ -66,15 +66,22 @@ def main():
         fit_file = "weight_manual.fit"
         encoder = FitEncoder_Weight()
 
-        # CORRECCIÓN DE ATRIBUTO: Usamos measure_ts para el cumplimiento de Garmin
-        # Si measure_ts no existe, usamos la hora actual como respaldo
-        ts = getattr(last_record, 'measure_ts', datetime.now())
+        # CORRECCIÓN DE TIMESTAMP:
+        # Wyze Ultra devuelve ms (13 dígitos). Garmin requiere segundos (10 dígitos).
+        raw_ts = getattr(last_record, 'measure_ts', int(datetime.now().timestamp() * 1000))
+        if raw_ts > 9999999999: # Si es milisegundos
+            ts_seconds = int(raw_ts / 1000)
+        else:
+            ts_seconds = int(raw_ts)
 
         # ORDEN CRÍTICO SECUENCIAL
         encoder.write_header()
         encoder.write_file_info()
         encoder.write_file_creator()
-        encoder.write_device_info(timestamp=ts)
+        
+        # Pasamos el timestamp ya normalizado a segundos
+        encoder.write_device_info(timestamp=ts_seconds)
+        
         encoder.write_weight_scale(last_record)
         encoder.finish()
 
