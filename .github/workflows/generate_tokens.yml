@@ -1,0 +1,28 @@
+name: Generate Garmin Tokens
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install garth
+        run: pip install garth
+
+      - name: Generate tokens
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+        run: |
+          python -c "
+          import garth, os
+          garth.login(os.environ['GARMIN_EMAIL'], os.environ['GARMIN_PASSWORD'])
+          print('--- COPIA ESTO COMO SECRET GARMIN_TOKENS ---')
+          print(garth.client.dumps())
+          print('--- FIN ---')
+          "
