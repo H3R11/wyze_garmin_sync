@@ -129,7 +129,7 @@ def main():
 
 
                 scale = client.scales.info(device_mac=device.mac)
-                                if scale is not None:
+                if scale is not None:
                     print(f"Registros encontrados para {device.nickname}:")
                     print(scale.latest_records)
                 else:
