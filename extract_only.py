@@ -1,6 +1,17 @@
 import os
+import ssl
 from wyze_sdk import Client
-from fit import FitEncoder_Weight # Asegúrate de que el nombre del archivo/clase coincida
+
+# BYPASS DE SEGURIDAD SSL (Replicando la lógica del script de sincronización)
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
+
+# ... resto del código (main, variables, etc.)
+
 
 # Configuración de variables (Wyze)
 WYZE_EMAIL = os.environ.get('WYZE_EMAIL')
