@@ -31,8 +31,8 @@ WYZE_EMAIL = os.environ.get('WYZE_EMAIL')
 WYZE_PASSWORD = os.environ.get('WYZE_PASSWORD')
 WYZE_KEY_ID = os.environ.get('WYZE_KEY_ID')
 WYZE_API_KEY = os.environ.get('WYZE_API_KEY')
-GARMIN_USERNAME = os.environ.get('Garmin_username')
-GARMIN_PASSWORD = os.environ.get('Garmin_password')
+GARMIN_EMAIL = os.environ.get('GARMIN_EMAIL')
+GARMIN_PASSWORD = os.environ.get('GARMIN_PASSWORD')
 
 def login_to_wyze():
     try:
@@ -49,7 +49,7 @@ def upload_to_garmin(file_path):
         garth.client.username
     except:
         try:
-            garth.login(GARMIN_USERNAME, GARMIN_PASSWORD)
+            garth.login(GARMIN_EMAIL, GARMIN_PASSWORD)
             garth.save('tokens')
         except:
             email = input("Enter Garmin email address: ")
