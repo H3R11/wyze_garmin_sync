@@ -1,27 +1,29 @@
+imporimport requests
 import os
 import ssl
-import sys
 import warnings
-import requests
-import functools
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+# 1. Protocolo Heredado: Desactivar advertencias
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
+# 2. Protocolo Heredado: Parchear la clase Session de 'requests'
+old_merge_environment_settings = requests.Session.merge_environment_settings
+
+def new_merge_environment_settings(self, url, proxies, stream, verify, cert):
+    settings = old_merge_environment_settings(self, url, proxies, stream, verify, cert)
+    settings['verify'] = False
+    return settings
+
+requests.Session.merge_environment_settings = new_merge_environment_settings
+
+# 3. Importaciones de lógica de negocio
 from wyze_sdk import Client
-from fit import FitEncoder_Weight 
+from fit import FitEncoder_Weight
+import garth
 
-# 1. DESHABILITAR WARNINGS Y VERIFICACIÓN SSL TOTAL
-# Esto silencia las advertencias de "Insecure Request" en el log
-from urllib3.exceptions import InsecureRequestWarning
-warnings.simplefilter('ignore', InsecureRequestWarning)
+# ... resto de tu lógica de extracción (main, etc.)
 
-# Esto fuerza a la librería 'requests' a ignorar el SSL en todas sus llamadas
-requests.Session.request = functools.partialmethod(requests.Session.request, verify=False)
-
-# Bypass adicional para el contexto global de Python
-try:
-    _create_unverified_https_context = ssl._create_unverified_context
-except AttributeError:
-    pass
-else:
-    ssl._create_default_https_context = _create_unverified_https_context
 
 # Configuración de variables
 WYZE_EMAIL = os.environ.get('WYZE_EMAIL')
