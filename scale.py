@@ -129,25 +129,36 @@ def main():
 
 
                                 # 1. Intento estándar para obtener info
+                                # 1. Intento estándar para obtener info
                 scale = client.scales.info(device_mac=device.mac)
 
-                # 2. Si falla (común en Scale Ultra), buscamos registros directamente
+                # 2. Si falla (común en Scale Ultra), buscamos registros con rango de tiempo
                 if scale is None:
                     print(f"Buscando registros profundos para {device.nickname}...")
                     try:
-                        records = client.scales.get_records(device_mac=device.mac)
+                        import datetime
+                        # Definimos el inicio de búsqueda (hace 2 días para asegurar)
+                        desde = datetime.datetime.now() - datetime.timedelta(days=2)
+                        
+                        records = client.scales.get_records(device_mac=device.mac, start_time=desde)
+                        
                         if records:
-                            # Creamos un objeto temporal para que el script no se rompa
                             class ScaleData: pass
                             scale = ScaleData()
                             scale.latest_records = records
                             scale.mac = device.mac
                         else:
-                            print(f"No hay mediciones en la nube para {device.nickname}.")
-                            continue # Esto se salta las líneas 138/139 que fallan
+                            print(f"No hay mediciones recientes en la nube para {device.nickname}.")
+                            continue 
                     except Exception as e:
                         print(f"Error en búsqueda profunda: {e}")
                         continue
+
+                # 3. Verificación final de seguridad para evitar error en línea 139
+                if scale is None or not hasattr(scale, 'latest_records') or not scale.latest_records:
+                    print(f"Saltando {device.nickname}: Sin datos disponibles.")
+                    continue
+
 
                 # 3. Verificación final de seguridad
                 if scale is None or not hasattr(scale, 'latest_records') or not scale.latest_records:
