@@ -128,12 +128,32 @@ def main():
             if device.type == "WyzeScale" or getattr(device.product, 'model', None) == "WL_SCU":
 
 
+                                # 1. Intento estándar para obtener info
                 scale = client.scales.info(device_mac=device.mac)
-                if scale is not None:
-                    print(f"Registros encontrados para {device.nickname}:")
-                    print(scale.latest_records)
-                else:
-                    print(f"Advertencia: No se pudieron recuperar datos de la nube para {device.nickname}.")
+
+                # 2. Si falla (común en Scale Ultra), buscamos registros directamente
+                if scale is None:
+                    print(f"Buscando registros profundos para {device.nickname}...")
+                    try:
+                        records = client.scales.get_records(device_mac=device.mac)
+                        if records:
+                            # Creamos un objeto temporal para que el script no se rompa
+                            class ScaleData: pass
+                            scale = ScaleData()
+                            scale.latest_records = records
+                            scale.mac = device.mac
+                        else:
+                            print(f"No hay mediciones en la nube para {device.nickname}.")
+                            continue # Esto se salta las líneas 138/139 que fallan
+                    except Exception as e:
+                        print(f"Error en búsqueda profunda: {e}")
+                        continue
+
+                # 3. Verificación final de seguridad
+                if scale is None or not hasattr(scale, 'latest_records') or not scale.latest_records:
+                    print(f"Saltando {device.nickname}: Sin datos disponibles.")
+                    continue
+
 
                 print(f"Scale found with MAC {device.mac}. Latest record is:")
                 print(scale.latest_records)
