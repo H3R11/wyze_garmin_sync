@@ -21,7 +21,7 @@ requests.Session.merge_environment_settings = new_merge_environment_settings
 from wyze_sdk import Client
 from fit import FitEncoder_Weight 
 
-# Configuración de variables desde GitHub Secrets
+# Variables de entorno
 WYZE_EMAIL = os.environ.get('WYZE_EMAIL')
 WYZE_PASSWORD = os.environ.get('WYZE_PASSWORD')
 WYZE_KEY_ID = os.environ.get('WYZE_KEY_ID')
@@ -29,10 +29,10 @@ WYZE_API_KEY = os.environ.get('WYZE_API_KEY')
 
 def main():
     try:
-        # Autenticación inicial con Wyze
+        # Autenticación con Wyze
         client = Client(email=WYZE_EMAIL, password=WYZE_PASSWORD, key_id=WYZE_KEY_ID, api_key=WYZE_API_KEY)
         
-        # 3. DETECCIÓN DE LA SCALE ULTRA (WL_SCU)
+        # 3. LOCALIZACIÓN DE LA BÁSCULA ULTRA (WL_SCU)
         devices = client.devices_list()
         scale = None
         for d in devices:
@@ -47,8 +47,7 @@ def main():
             print("ERROR: Dispositivo WL_SCU no localizado.")
             sys.exit(1)
 
-        # 4. EXTRACCIÓN DEL DATO (Peso: 225.1 lbs)
-        # El SDK requiere start_time para este modelo específico
+        # 4. EXTRACCIÓN DEL DATO (Identificado: 225.1 lbs)
         search_window = datetime.now() - timedelta(hours=48)
         records = client.scales.get_records(
             device_mac=scale.mac, 
@@ -57,35 +56,31 @@ def main():
         )
         
         if not records:
-            print("AVISO: No se encontraron registros recientes.")
+            print("AVISO: No hay registros recientes.")
             return
         
         last_record = records[0]
         print(f"ÉXITO: Peso identificado -> {last_record.weight} lbs")
 
-        # 5. Generación del archivo FIT (Protocolo Secuencial Garmin)
+        # 5. GENERACIÓN DEL ARCHIVO FIT (Protocolo Secuencial Garmin)
         fit_file = "weight_manual.fit"
         encoder = FitEncoder_Weight()
 
-        # ORDEN CRÍTICO PARA COMPATIBILIDAD CON GARMIN
-        # 1. Cabecera del archivo
+        # Extraemos el timestamp del registro para el cumplimiento de Garmin
+        ts = last_record.create_time
+
+        # ORDEN CRÍTICO SECUENCIAL
         encoder.write_header()
-        
-        # 2. Identificación del tipo de archivo (Weight Scale)
         encoder.write_file_info()
-        
-        # 3. Información del creador/dispositivo
         encoder.write_file_creator()
-        encoder.write_device_info()
         
-        # 4. Inserción del registro de peso (225.1 lbs)
-        # El método espera el objeto 'record' que obtuvimos de Wyze
+        # CORRECCIÓN: Se agrega el argumento 'timestamp' requerido
+        encoder.write_device_info(timestamp=ts)
+        
         encoder.write_weight_scale(last_record)
-        
-        # 5. Finalización (Cálculo de CRC y cierre del buffer)
         encoder.finish()
 
-        # 6. Escritura física del buffer al archivo .fit
+        # 6. ESCRITURA FÍSICA DEL BINARIO
         with open(fit_file, "wb") as f:
             f.write(encoder.getvalue())
 
