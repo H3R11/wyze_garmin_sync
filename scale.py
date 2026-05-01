@@ -51,15 +51,10 @@ def upload_to_garmin(file_path):
         try:
             garth.login(GARMIN_EMAIL, GARMIN_PASSWORD)
             garth.save('tokens')
-        except:
-            email = input("Enter Garmin email address: ")
-            password = getpass("Enter Garmin password: ")
-            try:
-                garth.login(email, password)
-                garth.save('tokens')
-            except Exception as exc:
-                print(repr(exc))
-                exit()
+        except Exception as e:
+            print(f"Fallo en login automático de Garmin: {e}")
+            exit()
+
 
     try:
         with open(file_path, "rb") as f:
