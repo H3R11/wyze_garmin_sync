@@ -129,6 +129,12 @@ def main():
 
 
                 scale = client.scales.info(device_mac=device.mac)
+                                if scale is not None:
+                    print(f"Registros encontrados para {device.nickname}:")
+                    print(scale.latest_records)
+                else:
+                    print(f"Advertencia: No se pudieron recuperar datos de la nube para {device.nickname}.")
+
                 print(f"Scale found with MAC {device.mac}. Latest record is:")
                 print(scale.latest_records)
                 print(f"Body Type: {scale.latest_records[0].body_type or 5}")
