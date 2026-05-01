@@ -1,20 +1,26 @@
 name: Manual FIT Extraction
 on:
-  workflow_dispatch: # Botón manual en la UI de GitHub
+  workflow_dispatch:
 
 jobs:
   extract:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install Dependencies
-        run: pip install wyze-sdk garth requests #
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install Dependencies with uv
+        run: uv pip install wyze-sdk garth requests --system
 
       - name: Run Extraction
         env:
