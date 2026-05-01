@@ -125,7 +125,8 @@ def main():
     if access_token:
         client = Client(token=access_token)
         for device in client.devices_list():
-            if device.type == "WyzeScale" or device.product_model == "WL_SCU":
+            if device.type == "WyzeScale" or getattr(device.product, 'model', None) == "WL_SCU":
+:
 
                 scale = client.scales.info(device_mac=device.mac)
                 print(f"Scale found with MAC {device.mac}. Latest record is:")
