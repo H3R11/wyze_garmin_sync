@@ -29,7 +29,6 @@ WYZE_API_KEY = os.environ.get('WYZE_API_KEY')
 
 def main():
     try:
-        # Autenticación con Wyze
         client = Client(email=WYZE_EMAIL, password=WYZE_PASSWORD, key_id=WYZE_KEY_ID, api_key=WYZE_API_KEY)
         
         # 3. LOCALIZACIÓN DE LA BÁSCULA ULTRA (WL_SCU)
@@ -60,29 +59,26 @@ def main():
             return
         
         last_record = records[0]
-        print(f"ÉXITO: Peso identificado -> {last_record.weight} lbs")
+        peso_valor = last_record.weight # 225.1
+        print(f"ÉXITO: Peso identificado -> {peso_valor} lbs")
 
         # 5. GENERACIÓN DEL ARCHIVO FIT (Protocolo Secuencial Garmin)
         fit_file = "weight_manual.fit"
         encoder = FitEncoder_Weight()
 
-        # CORRECCIÓN DE TIMESTAMP:
-        # Wyze Ultra devuelve ms (13 dígitos). Garmin requiere segundos (10 dígitos).
+        # Normalización de Timestamp (Segundos para Garmin)
         raw_ts = getattr(last_record, 'measure_ts', int(datetime.now().timestamp() * 1000))
-        if raw_ts > 9999999999: # Si es milisegundos
-            ts_seconds = int(raw_ts / 1000)
-        else:
-            ts_seconds = int(raw_ts)
+        ts_seconds = int(raw_ts / 1000) if raw_ts > 9999999999 else int(raw_ts)
 
         # ORDEN CRÍTICO SECUENCIAL
         encoder.write_header()
         encoder.write_file_info()
         encoder.write_file_creator()
-        
-        # Pasamos el timestamp ya normalizado a segundos
         encoder.write_device_info(timestamp=ts_seconds)
         
-        encoder.write_weight_scale(last_record)
+        # CORRECCIÓN FINAL: Pasamos el peso y el timestamp como argumentos requeridos
+        encoder.write_weight_scale(weight=peso_valor, timestamp=ts_seconds)
+        
         encoder.finish()
 
         # 6. ESCRITURA FÍSICA DEL BINARIO
