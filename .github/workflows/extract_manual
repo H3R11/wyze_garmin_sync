@@ -1,0 +1,32 @@
+name: Manual FIT Extraction
+on:
+  workflow_dispatch: # Botón manual en la UI de GitHub
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Dependencies
+        run: pip install wyze-sdk fit-encoder-weight #
+
+      - name: Run Extraction
+        env:
+          WYZE_EMAIL: ${{ secrets.WYZE_EMAIL }}
+          WYZE_PASSWORD: ${{ secrets.WYZE_PASSWORD }}
+          WYZE_KEY_ID: ${{ secrets.WYZE_KEY_ID }}
+          WYZE_API_KEY: ${{ secrets.WYZE_API_KEY }}
+        run: python extract_only.py
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: weight-file-manual
+          path: ./*.fit
+          retention-days: 1
