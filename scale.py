@@ -125,6 +125,11 @@ def main():
     if access_token:
         client = Client(token=access_token)
         for device in client.devices_list():
+            # Insertar antes de la línea 128
+print(f"DEBUG: Atributos del objeto device: {dir(device)}")
+if hasattr(device, 'product'):
+    print(f"DEBUG: Atributos de device.product: {dir(device.product)}")
+
             if device.type == "WyzeScale" or device.product_model == "WL_SCU":
 
                 scale = client.scales.info(device_mac=device.mac)
