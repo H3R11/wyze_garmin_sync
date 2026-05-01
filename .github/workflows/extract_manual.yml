@@ -20,7 +20,7 @@ jobs:
           version: "latest"
 
       - name: Install Dependencies with uv
-        run: uv pip install wyze-sdk garth requests --system
+        run: uv pip install -r requirements.txt --system
 
       - name: Run Extraction
         env:
