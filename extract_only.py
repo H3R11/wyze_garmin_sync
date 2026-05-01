@@ -1,19 +1,20 @@
 import os
 import ssl
+import sys
 from wyze_sdk import Client
+# Importa tu clase del codificador (asegúrate que el archivo se llame fit.py)
+from fit import FitEncoder_Weight 
 
-# BYPASS DE SEGURIDAD SSL (Replicando la lógica del script de sincronización)
+# BYPASS DE SEGURIDAD SSL (Replicando la lógica de tu flujo de sincronización)
 try:
     _create_unverified_https_context = ssl._create_unverified_context
 except AttributeError:
+    # Caso para versiones de Python muy antiguas (no aplica a 3.12, pero es buena práctica)
     pass
 else:
     ssl._create_default_https_context = _create_unverified_https_context
 
-# ... resto del código (main, variables, etc.)
-
-
-# Configuración de variables (Wyze)
+# Configuración de variables (extraídas de GitHub Secrets)
 WYZE_EMAIL = os.environ.get('WYZE_EMAIL')
 WYZE_PASSWORD = os.environ.get('WYZE_PASSWORD')
 WYZE_KEY_ID = os.environ.get('WYZE_KEY_ID')
@@ -29,24 +30,24 @@ def main():
     
     if not scale:
         print("Error: No se encontró la báscula Scale Ultra.")
-        return
+        sys.exit(1)
 
     # 3. Obtener el registro más reciente
     records = client.scales.get_records(device_mac=scale.mac, limit=1)
     if not records:
-        print("No hay registros disponibles.")
+        print("No hay registros disponibles en Wyze.")
         return
     
     last_record = records[0]
-    print(f"Dato extraído: {last_record.weight} lbs del {last_record.measure_ts}") #
+    print(f"Dato identificado: {last_record.weight} lbs") 
 
     # 4. Generar el archivo .fit
-    # Nota: Ajusta los parámetros según tu clase FitEncoder_Weight
-    fit_file = f"weight_{last_record.measure_ts}.fit"
+    fit_file = f"weight_extraction.fit"
     encoder = FitEncoder_Weight()
+    # Asumimos que write_fit_file es el método que genera el archivo
     encoder.write_fit_file(fit_file, last_record) 
     
-    print(f"--- ARCHIVO GENERADO: {fit_file} ---")
+    print(f"--- ÉXITO: Archivo generado en {fit_file} ---")
 
 if __name__ == "__main__":
     main()
