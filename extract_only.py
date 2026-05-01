@@ -66,17 +66,15 @@ def main():
         fit_file = "weight_manual.fit"
         encoder = FitEncoder_Weight()
 
-        # Extraemos el timestamp del registro para el cumplimiento de Garmin
-        ts = last_record.create_time
+        # CORRECCIÓN DE ATRIBUTO: Usamos measure_ts para el cumplimiento de Garmin
+        # Si measure_ts no existe, usamos la hora actual como respaldo
+        ts = getattr(last_record, 'measure_ts', datetime.now())
 
         # ORDEN CRÍTICO SECUENCIAL
         encoder.write_header()
         encoder.write_file_info()
         encoder.write_file_creator()
-        
-        # CORRECCIÓN: Se agrega el argumento 'timestamp' requerido
         encoder.write_device_info(timestamp=ts)
-        
         encoder.write_weight_scale(last_record)
         encoder.finish()
 
