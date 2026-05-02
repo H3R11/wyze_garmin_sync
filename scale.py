@@ -13,10 +13,11 @@ requests.Session.merge_environment_settings = new_merge_environment_settings
 
 import os
 import math
+import json
 import datetime
 import hashlib
 import certifi
-import garth
+import garminconnect
 from wyze_sdk import Client
 from wyze_sdk.errors import WyzeApiError
 from fit import FitEncoder_Weight
@@ -29,7 +30,7 @@ WYZE_KEY_ID     = os.environ.get('WYZE_KEY_ID')
 WYZE_API_KEY    = os.environ.get('WYZE_API_KEY')
 GARMIN_EMAIL    = os.environ.get('GARMIN_EMAIL')
 GARMIN_PASSWORD = os.environ.get('GARMIN_PASSWORD')
-GARMIN_TOKENS   = os.environ.get('GARMIN_TOKENS')  # Secret con tokens serializados
+GARMIN_TOKENS   = os.environ.get('GARMIN_TOKENS')
 
 
 def login_to_wyze():
@@ -48,18 +49,17 @@ def login_to_wyze():
 
 def upload_to_garmin(file_path):
     try:
-        GARMIN_TOKENS = os.environ.get('GARMIN_TOKENS')
-        
+        api = garminconnect.Garmin(GARMIN_EMAIL, GARMIN_PASSWORD)
+
         if GARMIN_TOKENS:
             tokens = json.loads(GARMIN_TOKENS)
-            api = garminconnect.Garmin('el7dedurango@gmail.com', 'Sofia1991.')
-            api.client.di_token      = tokens.get('di_token')
+            api.client.di_token         = tokens.get('di_token')
             api.client.di_refresh_token = tokens.get('di_refresh_token')
-            api.client.di_client_id  = tokens.get('di_client_id')
-            print("Tokens cargados desde secret.")
+            api.client.di_client_id     = tokens.get('di_client_id')
+            print("Tokens cargados desde secret — sin login.")
         else:
-            api = garminconnect.Garmin(GARMIN_EMAIL, GARMIN_PASSWORD)
             api.login()
+            print("Login directo con email/password.")
 
         with open(file_path, "rb") as f:
             api.upload_activity(f)
@@ -74,7 +74,6 @@ def generate_fit_file(scale):
 
     raw_ts = scale.latest_records[0].measure_ts
     ts_seconds = math.trunc(raw_ts / 1000) if raw_ts > 9999999999 else int(raw_ts)
-    # FIX: Convertir a datetime para que el encoder aplique el epoch de Garmin correctamente
     dt_medicion = datetime.datetime.fromtimestamp(ts_seconds)
 
     weight_in_kg = scale.latest_records[0].weight * 0.45359237
@@ -84,20 +83,19 @@ def generate_fit_file(scale):
     active = int(basal * 1.25) if basal is not None else None
 
     data = {
-        'percent_fat':       float(rec.body_fat)       if rec.body_fat       is not None else None,
-        'percent_hydration': float(rec.body_water)     if rec.body_water     is not None else None,
-        'visceral_fat_mass': float(rec.body_vfr)       if rec.body_vfr       is not None else None,
-        'bone_mass':         float(rec.bone_mineral)   if rec.bone_mineral   is not None else None,
-        'muscle_mass':       float(rec.muscle)         if rec.muscle         is not None else None,
-        'basal_met':         basal,
-        'active_met':        active,
-        'physique_rating':   float(rec.body_type or 5),
-        'metabolic_age':     float(rec.metabolic_age)  if rec.metabolic_age  is not None else None,
-        'visceral_fat_rating': float(rec.body_vfr)     if rec.body_vfr       is not None else None,
-        'bmi':               float(rec.bmi)            if rec.bmi            is not None else None,
+        'percent_fat':         float(rec.body_fat)     if rec.body_fat     is not None else None,
+        'percent_hydration':   float(rec.body_water)   if rec.body_water   is not None else None,
+        'visceral_fat_mass':   float(rec.body_vfr)     if rec.body_vfr     is not None else None,
+        'bone_mass':           float(rec.bone_mineral) if rec.bone_mineral is not None else None,
+        'muscle_mass':         float(rec.muscle)       if rec.muscle       is not None else None,
+        'basal_met':           basal,
+        'active_met':          active,
+        'physique_rating':     float(rec.body_type or 5),
+        'metabolic_age':       float(rec.metabolic_age) if rec.metabolic_age is not None else None,
+        'visceral_fat_rating': float(rec.body_vfr)     if rec.body_vfr     is not None else None,
+        'bmi':                 float(rec.bmi)           if rec.bmi          is not None else None,
     }
 
-    # FIX: Pasar dt_medicion (datetime) en todas las llamadas
     fit.write_file_info(time_created=dt_medicion)
     fit.write_file_creator()
     fit.write_device_info(timestamp=dt_medicion)
@@ -149,7 +147,7 @@ def main():
             generate_fit_file(scale)
             print("Fit data generated...")
 
-            fitfile_path  = "wyze_scale.fit"
+            fitfile_path    = "wyze_scale.fit"
             cksum_file_path = "cksum.txt"
 
             with open(fitfile_path, "rb") as fitfile:
@@ -158,7 +156,6 @@ def main():
             if os.path.exists(cksum_file_path):
                 with open(cksum_file_path, "r") as cksum_file:
                     stored_cksum = cksum_file.read().strip()
-
                 if cksum == stored_cksum:
                     print("No new measurement.")
                 else:
