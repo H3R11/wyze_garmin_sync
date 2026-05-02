@@ -1,9 +1,11 @@
 name: Sincronizar Bascula Wyze
 
 on:
-  schedule:
-    - cron: '0 13 * * *'
-  workflow_dispatch:
+  # Se elimina 'schedule' para evitar ejecuciones automáticas
+  workflow_dispatch: # Mantiene el botón manual y el disparo por API/a-Shell
+
+permissions:
+  contents: write
 
 jobs:
   sync:
@@ -23,7 +25,6 @@ jobs:
 
       - name: Run Script
         env:
-          # Aquí conectamos la "caja fuerte" de GitHub con el script de Python
           WYZE_EMAIL: ${{ secrets.WYZE_EMAIL }}
           WYZE_PASSWORD: ${{ secrets.WYZE_PASSWORD }}
           WYZE_KEY_ID: ${{ secrets.WYZE_KEY_ID }}
@@ -31,3 +32,13 @@ jobs:
           GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: python scale.py
+
+      - name: Commit and Push Checksum
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          # Registramos el archivo de control para evitar duplicados
+          git add cksum.txt
+          # Guardamos los cambios en el repositorio [skip ci]
+          git commit -m "Update weight checksum [skip ci]" || exit 0
+          git push
