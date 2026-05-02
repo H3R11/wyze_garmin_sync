@@ -48,23 +48,21 @@ def login_to_wyze():
 
 def upload_to_garmin(file_path):
     try:
+        GARMIN_TOKENS = os.environ.get('GARMIN_TOKENS')
+        
         if GARMIN_TOKENS:
-            # FIX: Reutiliza tokens desde Secret — sin hacer login, evita 429
-            garth.client.loads(GARMIN_TOKENS)
-            print("Tokens de Garmin cargados desde secret.")
+            tokens = json.loads(GARMIN_TOKENS)
+            api = garminconnect.Garmin('el7dedurango@gmail.com', 'Sofia1991.')
+            api.client.di_token      = tokens.get('di_token')
+            api.client.di_refresh_token = tokens.get('di_refresh_token')
+            api.client.di_client_id  = tokens.get('di_client_id')
+            print("Tokens cargados desde secret.")
         else:
-            # Solo si no hay tokens guardados
-            garth.login(GARMIN_EMAIL, GARMIN_PASSWORD)
-            print("Login exitoso. Guarda estos tokens como secret GARMIN_TOKENS:")
-            print(garth.client.dumps())
+            api = garminconnect.Garmin(GARMIN_EMAIL, GARMIN_PASSWORD)
+            api.login()
 
-        # FIX: Método correcto para subir archivos con garth
         with open(file_path, "rb") as f:
-            garth.connectapi(
-                "/upload-service/upload",
-                method="POST",
-                files={"file": (file_path, f, "application/octet-stream")}
-            )
+            api.upload_activity(f)
         return True
     except Exception as e:
         print(f"Garmin upload error: {e}")
