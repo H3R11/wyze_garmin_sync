@@ -11,8 +11,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install garth
-        run: pip install garth
+      - name: Install python-garminconnect
+        run: pip install garminconnect
 
       - name: Generate tokens
         env:
@@ -20,9 +20,11 @@ jobs:
           GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
         run: |
           python -c "
-          import garth, os
-          garth.login(os.environ['GARMIN_EMAIL'], os.environ['GARMIN_PASSWORD'])
+          import garminconnect, os, json
+          api = garminconnect.Garmin(os.environ['GARMIN_EMAIL'], os.environ['GARMIN_PASSWORD'])
+          api.login()
+          tokens = api.garth.client.dumps()
           print('--- COPIA ESTO COMO SECRET GARMIN_TOKENS ---')
-          print(garth.client.dumps())
+          print(tokens)
           print('--- FIN ---')
           "
