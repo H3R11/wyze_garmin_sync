@@ -47,6 +47,7 @@ def login_to_wyze():
         return None
 
 
+
 def upload_to_garmin(file_path):
     try:
         api = garminconnect.Garmin(GARMIN_EMAIL, GARMIN_PASSWORD)
@@ -56,18 +57,19 @@ def upload_to_garmin(file_path):
             api.client.di_token         = tokens.get('di_token')
             api.client.di_refresh_token = tokens.get('di_refresh_token')
             api.client.di_client_id     = tokens.get('di_client_id')
+            # Marcar como autenticado para evitar login
+            api.client.display_name     = tokens.get('display_name')
             print("Tokens cargados desde secret — sin login.")
         else:
             api.login()
             print("Login directo con email/password.")
 
-        with open(file_path, "rb") as f:
-            api.upload_activity(f)
+        # FIX: upload_activity espera string (ruta), no file object
+        api.upload_activity(file_path)
         return True
     except Exception as e:
         print(f"Garmin upload error: {e}")
         return False
-
 
 def generate_fit_file(scale):
     fit = FitEncoder_Weight()
