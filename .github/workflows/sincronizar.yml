@@ -3,7 +3,7 @@ name: Sincronizar Bascula Wyze
 on:
   schedule:
     # Corre todos los días a las 16:00 UTC (10:00 AM CST México)
-    - cron: '0 16 * * *'
+    - cron: '0 14 * * *'
   # Se elimina 'schedule' para evitar ejecuciones automáticas
   workflow_dispatch: # Mantiene el botón manual y el disparo por API/a-Shell
 
