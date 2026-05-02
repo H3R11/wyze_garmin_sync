@@ -47,7 +47,6 @@ def login_to_wyze():
         return None
 
 
-
 def upload_to_garmin(file_path):
     try:
         api = garminconnect.Garmin(GARMIN_EMAIL, GARMIN_PASSWORD)
@@ -57,45 +56,43 @@ def upload_to_garmin(file_path):
             api.client.di_token         = tokens.get('di_token')
             api.client.di_refresh_token = tokens.get('di_refresh_token')
             api.client.di_client_id     = tokens.get('di_client_id')
-            # Marcar como autenticado para evitar login
             api.client.display_name     = tokens.get('display_name')
             print("Tokens cargados desde secret — sin login.")
         else:
             api.login()
             print("Login directo con email/password.")
 
-        # FIX: upload_activity espera string (ruta), no file object
         api.upload_activity(file_path)
         return True
     except Exception as e:
         print(f"Garmin upload error: {e}")
         return False
 
-def generate_fit_file(scale):
+
+def generate_fit_file(rec):
     fit = FitEncoder_Weight()
 
-    raw_ts = scale.latest_records[0].measure_ts
+    raw_ts = rec.measure_ts
     ts_seconds = math.trunc(raw_ts / 1000) if raw_ts > 9999999999 else int(raw_ts)
     dt_medicion = datetime.datetime.fromtimestamp(ts_seconds)
 
-    weight_in_kg = scale.latest_records[0].weight * 0.45359237
+    weight_in_kg = rec.weight * 0.45359237
 
-    rec = scale.latest_records[0]
     basal = float(rec.bmr) if rec.bmr is not None else None
     active = int(basal * 1.25) if basal is not None else None
 
     data = {
-        'percent_fat':         float(rec.body_fat)     if rec.body_fat     is not None else None,
-        'percent_hydration':   float(rec.body_water)   if rec.body_water   is not None else None,
-        'visceral_fat_mass':   float(rec.body_vfr)     if rec.body_vfr     is not None else None,
-        'bone_mass':           float(rec.bone_mineral) if rec.bone_mineral is not None else None,
-        'muscle_mass':         float(rec.muscle)       if rec.muscle       is not None else None,
+        'percent_fat':         float(rec.body_fat)      if rec.body_fat      is not None else None,
+        'percent_hydration':   float(rec.body_water)    if rec.body_water    is not None else None,
+        'visceral_fat_mass':   float(rec.body_vfr)      if rec.body_vfr      is not None else None,
+        'bone_mass':           float(rec.bone_mineral)  if rec.bone_mineral  is not None else None,
+        'muscle_mass':         float(rec.muscle)        if rec.muscle        is not None else None,
         'basal_met':           basal,
         'active_met':          active,
         'physique_rating':     float(rec.body_type or 5),
         'metabolic_age':       float(rec.metabolic_age) if rec.metabolic_age is not None else None,
-        'visceral_fat_rating': float(rec.body_vfr)     if rec.body_vfr     is not None else None,
-        'bmi':                 float(rec.bmi)           if rec.bmi          is not None else None,
+        'visceral_fat_rating': float(rec.body_vfr)      if rec.body_vfr      is not None else None,
+        'bmi':                 float(rec.bmi)           if rec.bmi           is not None else None,
     }
 
     fit.write_file_info(time_created=dt_medicion)
@@ -141,12 +138,15 @@ def main():
                 print(f"Saltando {device.nickname}: Sin datos disponibles.")
                 continue
 
+            # Tomar el registro más reciente
+            rec = sorted(scale.latest_records, key=lambda r: r.measure_ts, reverse=True)[0]
+
             print(f"Scale found with MAC {device.mac}. Latest record is:")
-            print(scale.latest_records)
-            print(f"Body Type: {scale.latest_records[0].body_type or 5}")
+            print(rec)
+            print(f"Body Type: {rec.body_type or 5}")
 
             print("Generating fit data...")
-            generate_fit_file(scale)
+            generate_fit_file(rec)
             print("Fit data generated...")
 
             fitfile_path    = "wyze_scale.fit"
